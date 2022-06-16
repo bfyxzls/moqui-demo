@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a 
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<entity-facade-xml type="demo">
+    <!-- NOTE: other store/product demo data in mantle-udm in ZcaProductDemoData.xml -->
+
+    <!-- demo store settings for email/etc -->
+    <mantle.product.store.ProductStore productStoreId="POPC_DEFAULT" defaultLocale="en_US" defaultCurrencyUomId="USD"
+            storeDomain="demo.moqui.org" profileUrlPath="popc/Customer/Profile" productDataDocumentId="PopcProduct"/>
+
+    <moqui.basic.email.EmailTemplate emailTemplateId="PopcOrderPlaced" description="POPC Order Placed"
+            emailServerId="SYSTEM" bodyScreenLocation="component://SimpleScreens/screen/email/OrderPlaced.xml" webappName="webroot"
+            fromAddress="noreply@moqui.org" fromName="POP Commerce Demo" ccAddresses="" bccAddresses="" sendPartial="Y"
+            subject="${fromName} Order ${orderId}"/>
+    <mantle.product.store.ProductStoreEmail productStoreId="POPC_DEFAULT" emailTypeEnumId="PsetOrderPlaced"
+            emailTemplateId="PopcOrderPlaced" headerImagePath="images/MoquiLogoSmall.png" detailLinkPath="popc/Customer/OrderDetail"/>
+    <moqui.basic.email.EmailTemplate emailTemplateId="PopcShipmentShipped" description="POPC Shipment Shipped"
+            emailServerId="SYSTEM" bodyScreenLocation="component://SimpleScreens/screen/email/ShipmentShipped.xml" webappName="webroot"
+            fromAddress="noreply@moqui.org" fromName="POP Commerce Demo" ccAddresses="" bccAddresses="" sendPartial="Y"
+            subject="${fromName} Shipment ${shipmentId}">
+        <attachments fileName="Invoice-${invoiceId}.pdf" screenRenderMode="xsl-fo" attachmentCondition="invoiceId"
+                attachmentLocation="component://SimpleScreens/screen/SimpleScreens/Accounting/Invoice/PrintInvoice.xml"/>
+    </moqui.basic.email.EmailTemplate>
+    <mantle.product.store.ProductStoreEmail productStoreId="POPC_DEFAULT" emailTypeEnumId="PsetShipmentShipped"
+            emailTemplateId="PopcShipmentShipped" headerImagePath="images/MoquiLogoSmall.png" detailLinkPath="popc/Customer/OrderDetail"/>
+
+    <moqui.basic.email.EmailTemplate emailTemplateId="PopcInvoiceFinalized" description="POPC Invoice Finalized"
+            emailServerId="SYSTEM" bodyScreenLocation="component://SimpleScreens/screen/email/InvoiceFinalized.xml" webappName="webroot"
+            fromAddress="noreply@moqui.org" fromName="POP Commerce Demo" ccAddresses="" bccAddresses="" sendPartial="Y"
+            subject="${fromName} Invoice ${invoiceId}">
+        <attachments fileName="Invoice-${invoiceId}.pdf" screenRenderMode="xsl-fo"
+                attachmentLocation="component://SimpleScreens/screen/SimpleScreens/Accounting/Invoice/PrintInvoice.xml"/>
+    </moqui.basic.email.EmailTemplate>
+    <mantle.product.store.ProductStoreEmail productStoreId="POPC_DEFAULT" emailTypeEnumId="PsetInvoiceFinalized"
+            emailTemplateId="PopcInvoiceFinalized" headerImagePath="images/MoquiLogoSmall.png" detailLinkPath=""/>
+
+    <moqui.basic.email.EmailTemplate emailTemplateId="PopcInvoicesPastDue" description="POPC Invoices Past Due"
+            emailServerId="SYSTEM" bodyScreenLocation="component://SimpleScreens/screen/email/InvoicesPastDue.xml" webappName="webroot"
+            fromAddress="noreply@moqui.org" fromName="POP Commerce Demo" ccAddresses="" bccAddresses="" sendPartial="Y"
+            subject="POPC Past Due Invoice">
+        <attachments fileName="Invoice-${invoiceId}.pdf" screenRenderMode="xsl-fo" forEachIn="invoiceList"
+                attachmentLocation="component://SimpleScreens/screen/SimpleScreens/Accounting/Invoice/PrintInvoice.xml"/>
+    </moqui.basic.email.EmailTemplate>
+    <mantle.product.store.ProductStoreEmail productStoreId="POPC_DEFAULT" emailTypeEnumId="PsetInvoicesPastDue"
+            emailTemplateId="PopcInvoicesPastDue" headerImagePath="images/MoquiLogoSmall.png" detailLinkPath=""/>
+
+    <!-- demo POPC Admin app users -->
+
+    <parties partyId="JohnPopc" partyTypeEnumId="PtyPerson">
+        <person firstName="John" middleName="" lastName="Popc"/>
+        <roles roleTypeId="Employee"/>
+        <fromRelationships relationshipTypeEnumId="PrtEmployee" fromRoleTypeId="Employee" toPartyId="ORG_ZIZI_RETAIL" toRoleTypeId="OrgInternal"/>
+        <mantle.party.contact.ContactMech contactMechTypeEnumId="CmtEmailAddress" infoString="john.popc@moqui.org">
+            <mantle.party.contact.PartyContactMech contactMechPurposeId="EmailPrimary"/></mantle.party.contact.ContactMech>
+        <users userId="JohnPopc" username="john.popc" userFullName="John Popc"
+                currentPassword="16ac58bbfa332c1c55bd98b53e60720bfa90d394" passwordHashType="SHA"
+                passwordHint="framework name, lowercase" currencyUomId="USD" locale="en_US" timeZone="US/Pacific"
+                emailAddress="john.popc@moqui.org">
+            <groups userGroupId="POP_COMMERCE_ADMIN"/>
+        </users>
+    </parties>
+
+    <parties partyId="JohnAccounting" partyTypeEnumId="PtyPerson">
+        <person firstName="John" middleName="" lastName="Accounting"/>
+        <roles roleTypeId="Employee"/><roles roleTypeId="Accountant"/>
+        <fromRelationships relationshipTypeEnumId="PrtEmployee" fromRoleTypeId="Employee" toPartyId="ORG_ZIZI_RETAIL" toRoleTypeId="OrgInternal"/>
+        <mantle.party.contact.ContactMech contactMechTypeEnumId="CmtEmailAddress" infoString="john.accounting@moqui.org">
+            <mantle.party.contact.PartyContactMech contactMechPurposeId="EmailPrimary"/></mantle.party.contact.ContactMech>
+        <users userId="JohnAccounting" username="john.accounting" userFullName="John Accounting"
+                currentPassword="16ac58bbfa332c1c55bd98b53e60720bfa90d394" passwordHashType="SHA"
+                passwordHint="framework name, lowercase" currencyUomId="USD" locale="en_US" timeZone="US/Pacific"
+                emailAddress="john.accounting@moqui.org">
+            <groups userGroupId="PopcAdminAccounting"/>
+        </users>
+    </parties>
+    <parties partyId="JohnCatalog" partyTypeEnumId="PtyPerson">
+        <person firstName="John" middleName="" lastName="Catalog"/>
+        <roles roleTypeId="Employee"/>
+        <fromRelationships relationshipTypeEnumId="PrtEmployee" fromRoleTypeId="Employee" toPartyId="ORG_ZIZI_RETAIL" toRoleTypeId="OrgInternal"/>
+        <mantle.party.contact.ContactMech contactMechTypeEnumId="CmtEmailAddress" infoString="john.catalog@moqui.org">
+            <mantle.party.contact.PartyContactMech contactMechPurposeId="EmailPrimary"/></mantle.party.contact.ContactMech>
+        <users userId="JohnCatalog" username="john.catalog" userFullName="John Catalog"
+                currentPassword="16ac58bbfa332c1c55bd98b53e60720bfa90d394" passwordHashType="SHA"
+                passwordHint="framework name, lowercase" currencyUomId="USD" locale="en_US" timeZone="US/Pacific"
+                emailAddress="john.catalog@moqui.org">
+            <groups userGroupId="PopcAdminCatalogContent"/>
+        </users>
+    </parties>
+
+    <parties partyId="JohnPurchasing" partyTypeEnumId="PtyPerson">
+        <person firstName="John" middleName="" lastName="Purchasing"/>
+        <roles roleTypeId="Employee"/>
+        <fromRelationships relationshipTypeEnumId="PrtEmployee" fromRoleTypeId="Employee" toPartyId="ORG_ZIZI_RETAIL" toRoleTypeId="OrgInternal"/>
+        <mantle.party.contact.ContactMech contactMechTypeEnumId="CmtEmailAddress" infoString="john.purchasing@moqui.org">
+            <mantle.party.contact.PartyContactMech contactMechPurposeId="EmailPrimary"/></mantle.party.contact.ContactMech>
+        <users userId="JohnPurchasing" username="john.purchasing" userFullName="John Purchasing"
+                currentPassword="16ac58bbfa332c1c55bd98b53e60720bfa90d394" passwordHashType="SHA"
+                passwordHint="framework name, lowercase" currencyUomId="USD" locale="en_US" timeZone="US/Pacific"
+                emailAddress="john.purchasing@moqui.org">
+            <groups userGroupId="PopcAdminPurchasing"/>
+        </users>
+    </parties>
+    <parties partyId="JohnSales" partyTypeEnumId="PtyPerson">
+        <person firstName="John" middleName="" lastName="Sales"/>
+        <roles roleTypeId="Employee"/>
+        <fromRelationships relationshipTypeEnumId="PrtEmployee" fromRoleTypeId="Employee" toPartyId="ORG_ZIZI_RETAIL" toRoleTypeId="OrgInternal"/>
+        <mantle.party.contact.ContactMech contactMechTypeEnumId="CmtEmailAddress" infoString="john.sales@moqui.org">
+            <mantle.party.contact.PartyContactMech contactMechPurposeId="EmailPrimary"/></mantle.party.contact.ContactMech>
+        <users userId="JohnSales" username="john.sales" userFullName="John Sales"
+                currentPassword="16ac58bbfa332c1c55bd98b53e60720bfa90d394" passwordHashType="SHA"
+                passwordHint="framework name, lowercase" currencyUomId="USD" locale="en_US" timeZone="US/Pacific"
+                emailAddress="john.sales@moqui.org">
+            <groups userGroupId="PopcAdminSales"/>
+        </users>
+    </parties>
+
+    <parties partyId="JohnWarehouse" partyTypeEnumId="PtyPerson">
+        <person firstName="John" middleName="" lastName="Warehouse"/>
+        <roles roleTypeId="Employee"/>
+        <fromRelationships relationshipTypeEnumId="PrtEmployee" fromRoleTypeId="Employee" toPartyId="ORG_ZIZI_RETAIL" toRoleTypeId="OrgInternal"/>
+        <mantle.party.contact.ContactMech contactMechTypeEnumId="CmtEmailAddress" infoString="john.warehouse@moqui.org">
+            <mantle.party.contact.PartyContactMech contactMechPurposeId="EmailPrimary"/></mantle.party.contact.ContactMech>
+        <users userId="JohnWarehouse" username="john.warehouse" userFullName="John Warehouse"
+                currentPassword="16ac58bbfa332c1c55bd98b53e60720bfa90d394" passwordHashType="SHA"
+                passwordHint="framework name, lowercase" currencyUomId="USD" locale="en_US" timeZone="US/Pacific"
+                emailAddress="john.warehouse@moqui.org">
+            <groups userGroupId="PopcAdminWarehouse"/>
+        </users>
+    </parties>
+
+    <!-- demo POPC Admin app users - in user org limited groups -->
+
+    <parties partyId="JohnWhClerical" partyTypeEnumId="PtyPerson">
+        <person firstName="John" middleName="" lastName="WhClerical"/>
+        <roles roleTypeId="Employee"/>
+        <fromRelationships relationshipTypeEnumId="PrtEmployee" fromRoleTypeId="Employee" toPartyId="ORG_ZIZI_RETAIL" toRoleTypeId="OrgInternal"/>
+        <mantle.party.contact.ContactMech contactMechTypeEnumId="CmtEmailAddress" infoString="john.wh.clerical@moqui.org">
+            <mantle.party.contact.PartyContactMech contactMechPurposeId="EmailPrimary"/></mantle.party.contact.ContactMech>
+        <users userId="JohnWhClerical" username="john.wh.clerical" userFullName="John WhClerical"
+                currentPassword="16ac58bbfa332c1c55bd98b53e60720bfa90d394" passwordHashType="SHA"
+                passwordHint="framework name, lowercase" currencyUomId="USD" locale="en_US" timeZone="US/Pacific"
+                emailAddress="john.wh.clerical@moqui.org">
+            <groups userGroupId="PopcWhClericalLtd"/>
+        </users>
+    </parties>
+    <parties partyId="JohnWhGeneral" partyTypeEnumId="PtyPerson">
+        <person firstName="John" middleName="" lastName="WhGeneral"/>
+        <roles roleTypeId="Employee"/>
+        <fromRelationships relationshipTypeEnumId="PrtEmployee" fromRoleTypeId="Employee" toPartyId="ORG_ZIZI_RETAIL" toRoleTypeId="OrgInternal"/>
+        <mantle.party.contact.ContactMech contactMechTypeEnumId="CmtEmailAddress" infoString="john.wh.general@moqui.org">
+            <mantle.party.contact.PartyContactMech contactMechPurposeId="EmailPrimary"/></mantle.party.contact.ContactMech>
+        <users userId="JohnWhGeneral" username="john.wh.general" userFullName="John WhGeneral"
+                currentPassword="16ac58bbfa332c1c55bd98b53e60720bfa90d394" passwordHashType="SHA"
+                passwordHint="framework name, lowercase" currencyUomId="USD" locale="en_US" timeZone="US/Pacific"
+                emailAddress="john.wh.general@moqui.org">
+            <groups userGroupId="PopcWhGeneralLtd"/>
+        </users>
+    </parties>
+
+    <!-- run index for search -->
+    <org.moqui.search.SearchServices.indexDataFeedDocuments dataFeedId="MantleSearch"/>
+    <org.moqui.search.SearchServices.indexDataFeedDocuments dataFeedId="PopCommerceSearch"/>
+</entity-facade-xml>

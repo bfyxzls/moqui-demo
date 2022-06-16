@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.1.xsd"
+        default-menu-title="Files" default-menu-index="4">
+
+    <parameter name="paymentMethodId" required="true"/>
+    <parameter name="paymentMethodFileId"/>
+
+    <transition name="findPayment"><default-response url="//${appRoot}/Accounting/Payment/FindPayment"/></transition>
+    <transition name="generateNachaFile"><service-call name="mantle.account.NachaServices.generate#NachaFile"/>
+        <default-response url="."/></transition>
+    <transition name="generatePosPayFile"><service-call name="mantle.account.PositivePayServices.generate#PositivePayFile"/>
+        <default-response url="."/></transition>
+    <transition name="sendSystemMessage"><service-call name="mantle.account.PaymentMethodServices.produce#PaymentMethodFileSystemMessage"/>
+        <default-response url="."/></transition>
+    <transition name="cancelFile"><service-call name="mantle.account.PaymentMethodServices.cancel#PaymentMethodFile"/>
+        <default-response url="."/></transition>
+    <transition name="downloadFileText" read-only="true">
+        <parameter name="paymentMethodFileId"/>
+        <actions>
+            <entity-find-one entity-name="mantle.account.method.PaymentMethodFile" value-field="paymentMethodFile"/>
+            <script>ec.web.sendTextResponse(paymentMethodFile.fileText, "text/plain", "PaymentFile${paymentMethodFileId}.txt")</script>
+        </actions>
+        <default-response type="none"/>
+    </transition>
+
+    <actions>
+        <!-- 'paymentMethod' from PaymentMethod.xml always-actions -->
+        <entity-find-one entity-name="mantle.account.method.BankAccount" value-field="bankAccount"/>
+        <entity-find entity-name="mantle.account.method.PaymentMethodFileType" list="allMethodFileTypeList">
+            <econdition field-name="paymentMethodId"/></entity-find>
+
+        <entity-find-one entity-name="mantle.party.PartyRole" value-field="ownerOrgRole">
+            <field-map field-name="partyId" from="paymentMethod?.ownerPartyId"/>
+            <field-map field-name="roleTypeId" value="OrgInternal"/>
+        </entity-find-one>
+        <if condition="ownerOrgRole == null"><return error="true" message="Files only available for payment methods owned by an Internal Organization"/></if>
+    </actions>
+    <widgets>
+        <section name="GenerateNachaSection" condition="bankAccount?.nachaImmedDest"><widgets>
+            <container-dialog id="GenerateNachaFileDialog" button-text="Generate NACHA File">
+                <form-single name="GenerateNachaFile" transition="generateNachaFile">
+                    <field name="paymentMethodId"><default-field><hidden/></default-field></field>
+                    <field name="fromDate"><default-field><date-time/></default-field></field>
+                    <field name="thruDate"><default-field><date-time/></default-field></field>
+                    <field name="fileDate" from="ec.user.nowTimestamp"><default-field><date-time/></default-field></field>
+                    <field name="effectiveEntryDate"><default-field tooltip="Transaction settle/post date. Defaults to next week day after File Date.">
+                        <date-time type="date"/></default-field></field>
+                    <field name="nachaEntryDescription" from="bankAccount.nachaEntryDescription">
+                        <default-field title="NACHA Entry Description"><text-line size="10" maxlength="10"/></default-field></field>
+                    <field name="submitButton"><default-field title="Generate"><submit/></default-field></field>
+                </form-single>
+            </container-dialog>
+        </widgets></section>
+        <section name="GeneratePosPaySection" condition="bankAccount?.posPayFormatEnumId"><widgets>
+            <container-dialog id="GeneratePosPayFileDialog" button-text="Generate Pos. Pay File">
+                <form-single name="GeneratePosPayFile" transition="generatePosPayFile">
+                    <field name="paymentMethodId"><default-field><hidden/></default-field></field>
+                    <field name="fromDate"><default-field><date-time/></default-field></field>
+                    <field name="thruDate"><default-field><date-time/></default-field></field>
+                    <field name="fileDate" from="ec.user.nowTimestamp"><default-field><date-time/></default-field></field>
+                    <field name="submitButton"><default-field title="Generate"><submit/></default-field></field>
+                </form-single>
+            </container-dialog>
+        </widgets></section>
+
+        <form-list name="FileList" list="fileList" skip-form="true" header-dialog="true" saved-finds="true">
+            <entity-find entity-name="mantle.account.method.PaymentMethodFile" list="fileList">
+                <search-form-inputs default-order-by="-fileDate"/><econdition field-name="paymentMethodId"/></entity-find>
+
+            <row-actions>
+                <set field="methodFileType" from="allMethodFileTypeList.find({ it.fileTypeEnumId == fileTypeEnumId })"/>
+                <set field="canSendSystemMessage" from="methodFileType?.systemMessageTypeId &amp;&amp; methodFileType?.systemMessageRemoteId"/>
+                <if condition="canSendSystemMessage">
+                    <entity-find entity-name="moqui.service.message.SystemMessage" list="existingMessageList">
+                        <econdition field-name="paymentMethodFileId"/>
+                        <econdition field-name="systemMessageTypeId" from="methodFileType.systemMessageTypeId"/>
+                        <econdition field-name="systemMessageRemoteId" from="methodFileType.systemMessageRemoteId"/>
+                        <!-- showing status so include all: <econdition field-name="statusId" operator="not-in" value="SmsgRejected,SmsgCancelled"/> -->
+                        <select-field field-name="systemMessageId,statusId"/>
+                    </entity-find>
+                    <if condition="existingMessageList.size() &gt; 0"><set field="canSendSystemMessage" from="false"/></if>
+                </if>
+            </row-actions>
+
+            <hidden-parameters><parameter name="paymentMethodId"/></hidden-parameters>
+
+            <field name="paymentMethodFileId">
+                <header-field show-order-by="true" title="File ID"><text-find size="20" hide-options="true" default-operator="begins"/></header-field>
+                <default-field><display/></default-field>
+            </field>
+            <field name="fileTypeEnumId"><header-field show-order-by="true" title="File Type"/>
+                <default-field><display-entity entity-name="moqui.basic.Enumeration"/></default-field></field>
+            <field name="fileDate"><header-field show-order-by="true"><date-period allow-empty="true"/></header-field>
+                <default-field><display/></default-field></field>
+            <field name="entryCount"><header-field show-order-by="true"/>
+                <default-field><display/></default-field></field>
+            <field name="debitAmountTotal"><header-field show-order-by="true"><range-find size="10"/></header-field>
+                <default-field><display format="#,##0.00"/></default-field></field>
+            <field name="creditAmountTotal"><header-field show-order-by="true"><range-find size="10"/></header-field>
+                <default-field><display format="#,##0.00"/></default-field></field>
+            <field name="paymentsButton"><default-field title="">
+                <link url="findPayment" text="Payments" parameter-map="[paymentMethodFileId:paymentMethodFileId]"/>
+            </default-field></field>
+            <field name="isCancelled">
+                <conditional-field condition="isCancelled != 'Y'">
+                    <link url="cancelFile" text="Cancel" parameter-map="[paymentMethodFileId:paymentMethodFileId, partyId:partyId]"
+                            confirmation="Remove all payments from this file and cancel?" btn-type="danger"/>
+                </conditional-field>
+                <default-field title=""><display text="Cancelled"/></default-field>
+            </field>
+            <field name="messages">
+                <conditional-field condition="canSendSystemMessage &amp;&amp; isCancelled != 'Y'">
+                    <link url="sendSystemMessage" text="Send to Bank" parameter-map="[paymentMethodFileId:paymentMethodFileId]"/>
+                </conditional-field>
+                <conditional-field condition="existingMessageList">
+                    <label text="${existingMessageList.collect({it.systemMessageId + ' ' + it.statusId?.substring(4)}).join(', ')}"/>
+                </conditional-field>
+            </field>
+            <field name="downloadButton"><header-field title="Find"><submit/></header-field>
+                <default-field title=""><link url="downloadFileText" text="Download File ${paymentMethodFileId}"/></default-field></field>
+        </form-list>
+    </widgets>
+</screen>

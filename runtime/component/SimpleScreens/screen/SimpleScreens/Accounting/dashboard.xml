@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.1.xsd"
+        default-menu-title="Dashboard" default-menu-index="1">
+
+    <transition name="editParty"><default-response url="//${appRoot}/Party/EditParty"/></transition>
+    <transition name="findInvoice"><default-response url="../Invoice/FindInvoice"/></transition>
+    <transition name="editPaymentMethod"><default-response url="//${appRoot}/Party/PaymentMethod/EditPaymentMethod"/></transition>
+    <transition name="paymentMethodTrans"><default-response url="//${appRoot}/Party/PaymentMethod/PaymentMethodTrans"/></transition>
+
+    <widgets>
+        <container-row><row-col md="6">
+            <container-box><box-header title="Invoices and Payments"/><box-body>
+                <link url="../Invoice/FindInvoice" text="Invoices"/>
+                <link url="../Invoice/Aging" text="Aging##Invoice"/>
+                <link url="../Payment/FindPayment" text="Payments"/>
+                <link url="../Payment/BulkPaymentCheck" text="Bulk Checks"/>
+                <link url="../FinancialAccount/FindFinancialAccount" text="Financial Accounts"/>
+            </box-body></container-box>
+        </row-col><row-col md="6">
+            <container-box><box-header title="General Ledger"/><box-toolbar>
+                <link url="../Reports" text="Reports"/>
+            </box-toolbar><box-body>
+                <link url="../Transaction" text="Transactions"/>
+                <link url="../Transaction/FindTransactionEntry" text="Transaction Entries"/>
+                <link url="../GlAccount" text="GL Accounts"/>
+                <link url="../FindJournal" text="GL Journals"/>
+                <link url="../TimePeriod" text="Time Periods"/>
+                <link url="../Budget" text="Budgets"/>
+            </box-body></container-box>
+        </row-col></container-row>
+
+        <dynamic-container id="OrgInternalSummary" transition="OrgInternalSummary"/>
+    </widgets>
+</screen>

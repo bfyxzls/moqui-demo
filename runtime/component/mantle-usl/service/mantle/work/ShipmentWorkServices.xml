@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a 
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-2.1.xsd">
+
+    <service verb="create" noun="ShipmentLoadShip">
+        <in-parameters>
+            <auto-parameters entity-name="mantle.work.effort.WorkEffort" include="nonpk"/>
+            <parameter name="workEffortTypeEnumId" default-value="WetEvent"/>
+            <parameter name="purposeEnumId" default-value="WepShipmentShip"/>
+            <parameter name="statusId" default-value="WeInPlanning"/>
+            <parameter name="timeUomId" default-value="TF_hr"/>
+
+            <parameter name="facilityId" required="true"/>
+            <parameter name="estimatedStartDate" type="Timestamp" required="true"/>
+
+            <parameter name="assetIdList" type="List"><parameter name="assetId"/></parameter>
+            <parameter name="assetStatusId" default-value="WeaaAssigned"/>
+            <parameter name="assetFromDate" default="ec.user.nowTimestamp"/>
+            <parameter name="shipmentIdList" type="List"><parameter name="shipmentId"/></parameter>
+        </in-parameters>
+        <out-parameters><parameter name="workEffortId"/></out-parameters>
+        <actions>
+            <service-call name="create#mantle.work.effort.WorkEffort" in-map="context" out-map="context"/>
+
+            <iterate list="assetIdList" entry="assetId">
+                <service-call name="create#mantle.work.effort.WorkEffortAssetAssign"
+                        in-map="[workEffortId:workEffortId, assetId:assetId, statusId:assetStatusId, fromDate:assetFromDate]"/>
+            </iterate>
+            <iterate list="shipmentIdList" entry="shipmentId">
+                <service-call name="update#mantle.shipment.Shipment" in-map="[shipmentId:shipmentId, shipWorkEffortId:workEffortId]"/>
+            </iterate>
+        </actions>
+    </service>
+
+    <service verb="add" noun="ShipmentToShipmentLoad">
+        <in-parameters>
+            <parameter name="shipmentId" required="true"/>
+            <parameter name="workEffortId" required="true"/>
+            <parameter name="binLocationNumber" type="Long"/>
+            <parameter name="allowBulkLocations" type="Boolean" default="true"/>
+        </in-parameters>
+        <actions>
+            <entity-find-one entity-name="mantle.shipment.Shipment" value-field="shipment"/>
+            <if condition="shipment.statusId in ['ShipShipped', 'ShipDelivered', 'ShipRejected','ShipCancelled']">
+                <return message="Shipment ${shipmentId} is in status ${shipment.status?.description ?: shipment.statusId}, not shipping" type="warning"/></if>
+
+            <!-- TODO if !allowBulkLocations return with warning if any inventory reserved against bulk location -->
+
+            <!-- if no binLocationNumber sequence it -->
+            <if condition="!binLocationNumber">
+                <entity-find entity-name="mantle.shipment.Shipment" list="shipBinList">
+                    <econdition field-name="shipWorkEffortId" from="workEffortId"/>
+                    <econdition field-name="binLocationNumber" operator="is-not-null"/>
+                    <select-field field-name="binLocationNumber"/>
+                    <order-by field-name="binLocationNumber"/>
+                </entity-find>
+                <script><![CDATA[
+                    if (shipBinList) {
+                        List binNumList = shipBinList*.binLocationNumber
+                        long lastBinNum = 0
+                        for (binNum in binNumList) {
+                            if (binNum > (lastBinNum + 1)) { binLocationNumber = lastBinNum + 1; break }
+                            lastBinNum = binNum
+                        }
+                        if (!binLocationNumber) binLocationNumber = lastBinNum + 1
+                    } else {
+                        binLocationNumber = 1
+                    }
+                ]]></script>
+            </if>
+
+            <!-- update the shipment -->
+            <service-call name="update#mantle.shipment.Shipment"
+                    in-map="[shipmentId:shipmentId, shipWorkEffortId:workEffortId, binLocationNumber:binLocationNumber]"/>
+        </actions>
+    </service>
+    <service verb="add" noun="OrderPartToShipmentLoad">
+        <in-parameters>
+            <parameter name="orderId" required="true"/>
+            <parameter name="orderPartSeqId" required="true"/>
+            <parameter name="workEffortId" required="true"/>
+            <parameter name="binLocationNumber" type="Long"/>
+            <parameter name="allowBulkLocations" type="Boolean" default="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="shipmentIdList"/>
+        </out-parameters>
+        <actions>
+            <entity-find-one entity-name="mantle.order.OrderPart" value-field="orderPart"/>
+            <if condition="orderPart.statusId != 'OrderApproved'">
+                <return message="Order ${orderId} part ${orderPartSeqId} is not in Approved status, not shipping" type="warning"/></if>
+
+            <!-- find existing shipment(s) for items in this order part -->
+            <entity-find entity-name="mantle.order.OrderItem" list="orderItemList">
+                <econdition field-name="orderId"/><econdition field-name="orderPartSeqId"/></entity-find>
+            <set field="orderItemSeqIdList" from="orderItemList*.orderItemSeqId"/>
+            <entity-find entity-name="mantle.shipment.ShipmentAndItemSource" list="shipmentItemSourceList" distinct="true">
+                <econdition field-name="orderId"/>
+                <econdition field-name="orderItemSeqId" operator="in" from="orderItemSeqIdList"/>
+                <econdition field-name="shipmentStatusId" operator="in" value="ShipInput,ShipScheduled"/>
+                <econdition field-name="statusId" operator="not-equals" value="SisCancelled"/>
+                <select-field field-name="shipmentId"/>
+            </entity-find>
+            <set field="shipmentIdList" from="shipmentItemSourceList*.shipmentId"/>
+
+            <!-- if has no shipments create one -->
+            <!-- NOTE: if not all shipped then ship the rest? no, don't bulk or auto extend what is likely a manual order shipment -->
+            <if condition="!shipmentIdList">
+                <service-call name="mantle.shipment.ShipmentServices.create#OrderPartShipment" out-map="createShipmentOut"
+                        in-map="[orderId:orderId, orderPartSeqId:orderPartSeqId]"/>
+                <if condition="createShipmentOut.shipmentId"><set field="shipmentIdList" from="[createShipmentOut.shipmentId]"/></if>
+            </if>
+
+            <!-- add shipment(s) to shipment load (picklist) -->
+            <iterate list="shipmentIdList" entry="shipmentId">
+                <service-call name="mantle.work.ShipmentWorkServices.add#ShipmentToShipmentLoad" in-map="[shipmentId:shipmentId,
+                        workEffortId:workEffortId, binLocationNumber:binLocationNumber, allowBulkLocations:allowBulkLocations]"/>
+            </iterate>
+        </actions>
+    </service>
+
+    <service verb="create" noun="ShipmentLoadsForOrders" transaction-timeout="600">
+        <in-parameters>
+            <parameter name="facilityId" required="true"/>
+            <parameter name="workEffortName" required="true"/>
+            <parameter name="estimatedStartDate" type="Timestamp" default="ec.user.nowTimestamp"/>
+            <parameter name="allowBulkLocations" type="Boolean" default="true"/>
+
+            <parameter name="ordersPerPicklist" type="Long" required="true"/>
+            <parameter name="orderByField"/>
+
+            <parameter name="inputFieldsMap" type="Map" default="ec.web.requestParameters"/>
+            <parameter name="excludeOnPicklist"/>
+            <parameter name="excludeNotPickLoc"/>
+            <parameter name="onlyPartlyShipped"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="picklistsCreated" type="Long"/>
+            <parameter name="workEffortIdList" type="List"><parameter name="workEffortId"/></parameter>
+        </out-parameters>
+        <actions>
+            <set field="excludeOnPicklist" from="excludeOnPicklist ?: inputFieldsMap.excludeOnPicklist ?: 'true'"/>
+            <set field="excludeNotPickLoc" from="excludeNotPickLoc ?: inputFieldsMap.excludeNotPickLoc ?: 'true'"/>
+            <set field="onlyPartlyShipped" from="onlyPartlyShipped ?: inputFieldsMap.onlyPartlyShipped ?: 'false'"/>
+
+            <entity-find entity-name="moqui.basic.EnumGroupMember" list="productItemTypeEgms" cache="true">
+                <econdition field-name="enumGroupEnumId" value="EngItemsProduct"/></entity-find>
+            <set field="itemTypeEnumIdList" from="productItemTypeEgms*.enumId"/>
+
+            <!-- NOTE: see similar entity-find in Picklist/AddOrder.xml in SimpleScreens -->
+            <if condition="excludeOnPicklist == 'false'"><then>
+                <set field="excludeOnPicklistCond" from="ec.entity.getConditionFactory().makeConditionWhere('''NOT EXISTS
+                    (SELECT SHMT.SHIPMENT_ID
+                     FROM SHIPMENT_ITEM_SOURCE SHIS INNER JOIN SHIPMENT SHMT ON SHIS.SHIPMENT_ID = SHMT.SHIPMENT_ID
+                     WHERE SHIS.ORDER_ID = OITM.ORDER_ID AND SHIS.ORDER_ITEM_SEQ_ID = OITM.ORDER_ITEM_SEQ_ID
+                        AND SHMT.STATUS_ID NOT IN ('ShipInput', 'ShipScheduled', 'ShipRejected', 'ShipCancelled') AND SHIS.QUANTITY > 0)''')"/>
+            </then><else>
+                <set field="excludeOnPicklistCond" from="ec.entity.getConditionFactory().makeConditionWhere('''NOT EXISTS
+                    (SELECT SHMT.SHIPMENT_ID
+                     FROM SHIPMENT_ITEM_SOURCE SHIS INNER JOIN SHIPMENT SHMT ON SHIS.SHIPMENT_ID = SHMT.SHIPMENT_ID
+                     WHERE SHIS.ORDER_ID = OITM.ORDER_ID AND SHIS.ORDER_ITEM_SEQ_ID = OITM.ORDER_ITEM_SEQ_ID
+                        AND (SHMT.SHIP_WORK_EFFORT_ID IS NOT NULL OR SHMT.STATUS_ID NOT IN ('ShipInput', 'ShipScheduled', 'ShipRejected', 'ShipCancelled'))
+                        AND SHIS.QUANTITY > 0)''')"/>
+            </else></if>
+            <entity-find entity-name="mantle.order.OrderPartFindView" list="orderPartList" limit="500">
+                <search-form-inputs default-order-by="${orderByField}"
+                        paginate="false" input-fields-map="inputFieldsMap"
+                        skip-fields="vendorRoleTypeId,customerRoleTypeId,customerClassificationId,itemTypeEnumId,orderType,facilityId,workEffortId"/>
+                <econdition field-name="partStatusId" value="OrderApproved"/>
+                <econdition field-name="vendorRoleTypeId" value="OrgInternal"/>
+                <econdition field-name="itemTypeEnumId" operator="in" from="itemTypeEnumIdList"/>
+                <econdition field-name="facilityId" ignore-if-empty="true"/>
+                <econdition field-name="customerClassificationId" from="inputFieldsMap.customerClassificationId" ignore-if-empty="true"/>
+                <date-filter from-field-name="customerClassFromDate" thru-field-name="customerClassThruDate" ignore="!inputFieldsMap.customerClassificationId"/>
+                <econdition field-name="productId" operator="in" from="inputFieldsMap.findProductId" ignore-if-empty="true"/>
+                <econdition field-name="quantity" operator="greater-equals" from="inputFieldsMap.findQuantity_from" ignore-if-empty="true"/>
+                <econdition field-name="quantity" operator="less-equals" from="inputFieldsMap.findQuantity_thru" ignore-if-empty="true"/>
+                <econdition field-name="locationTypeEnumId" value="FltPick"/>
+                <econdition-object field="excludeOnPicklistCond"/><!-- NOTE: ignored if null -->
+
+                <having-econditions>
+                    <econdition field-name="quantityTotal" to-field-name="resQuantity" ignore="excludeNotPickLoc == 'false'"/>
+                    <!-- useless when filtering by pick locations: <econdition field-name="quantityNotAvailable" operator="greater" from="0.0" ignore="onlyInventoryUnavailable != 'true'"/> -->
+                    <econdition field-name="issuedQuantity" operator="greater" from="0.0" ignore="onlyPartlyShipped != 'true'"/>
+                </having-econditions>
+                <select-field field-name="orderId,orderPartSeqId,quantityTotal"/>
+                <!-- NOTE: always need to select resQuantity,issuedQuantity if having conditions are used (EntityFindBuilder doesn't yet add these to sub-select automatically) -->
+                <select-field field-name="resQuantity${onlyPartlyShipped != 'true' ? '' : ',issuedQuantity'}"/>
+            </entity-find>
+
+            <!-- <log level="warn" message="orderPartList_xafind: ${orderPartList_xafind}"/> -->
+
+            <set field="picklistsCreated" from="0"/>
+            <set field="workEffortIdList" from="[]"/>
+            <set field="curWorkEffortId" from="null"/>
+            <set field="curBinLocationNumber" from="1"/>
+
+            <iterate list="orderPartList" entry="orderPart">
+                <!-- NOTE any validation needed per OrderPart? -->
+
+                <!-- create a picklist (shipment load WorkEffort) if none active -->
+                <if condition="!curWorkEffortId">
+                    <set field="picklistsCreated" from="picklistsCreated + 1"/>
+                    <service-call name="mantle.work.ShipmentWorkServices.create#ShipmentLoadShip"
+                            out-map="createShipLoadOut" out-map-add-to-existing="false"
+                            in-map="[facilityId:facilityId, estimatedStartDate:estimatedStartDate, workEffortName:(workEffortName + ' ' + picklistsCreated)]"/>
+                    <set field="curWorkEffortId" from="createShipLoadOut.workEffortId"/>
+                    <set field="curBinLocationNumber" from="1"/>
+                </if>
+
+                <!-- add order to picklist -->
+                <service-call name="mantle.work.ShipmentWorkServices.add#OrderPartToShipmentLoad"
+                        in-map="[orderId:orderPart.orderId, orderPartSeqId:orderPart.orderPartSeqId, workEffortId:curWorkEffortId,
+                            binLocationNumber:curBinLocationNumber, allowBulkLocations:allowBulkLocations]"/>
+                <set field="curBinLocationNumber" from="curBinLocationNumber + 1"/>
+
+                <!-- if curBinLocationNumber greater than ordersPerPicklist clear curWorkEffortId to create new for next order -->
+                <if condition="curBinLocationNumber &gt; ordersPerPicklist">
+                    <set field="curWorkEffortId" from="null"/>
+                    <set field="curBinLocationNumber" from="1"/>
+                </if>
+            </iterate>
+
+            <message type="success">Created ${picklistsCreated} picklists for ${orderPartList.size()} orders</message>
+        </actions>
+    </service>
+</services>

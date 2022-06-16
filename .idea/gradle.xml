@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleHome" value="$PROJECT_DIR$/../../../tools/gradle-4.5.1-all/gradle-4.5.1" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/framework" />
+            <option value="$PROJECT_DIR$/moqui-util" />
+            <option value="$PROJECT_DIR$/runtime" />
+            <option value="$PROJECT_DIR$/runtime/base-component" />
+            <option value="$PROJECT_DIR$/runtime/base-component/webroot" />
+            <option value="$PROJECT_DIR$/runtime/component" />
+            <option value="$PROJECT_DIR$/runtime/component/HiveMind" />
+            <option value="$PROJECT_DIR$/runtime/component/PopCommerce" />
+            <option value="$PROJECT_DIR$/runtime/component/PopRestStore" />
+            <option value="$PROJECT_DIR$/runtime/component/SimpleScreens" />
+            <option value="$PROJECT_DIR$/runtime/component/example" />
+            <option value="$PROJECT_DIR$/runtime/component/mantle-usl" />
+            <option value="$PROJECT_DIR$/runtime/component/moqui-camel" />
+            <option value="$PROJECT_DIR$/runtime/component/moqui-elasticsearch" />
+            <option value="$PROJECT_DIR$/runtime/component/moqui-fop" />
+            <option value="$PROJECT_DIR$/runtime/component/moqui-poi" />
+            <option value="$PROJECT_DIR$/runtime/component/moqui-workflow" />
+          </set>
+        </option>
+        <option name="useQualifiedModuleNames" value="true" />
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>

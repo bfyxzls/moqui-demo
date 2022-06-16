@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a 
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<entity-facade-xml type="seed">
+    <!-- HiveMind PM (/hm) DataDocument Links -->
+    <moqui.entity.document.DataDocumentLink dataDocumentId="MantleWikiPage" linkSeqId="21" linkSet="hm" label="Wiki Page" urlType="screen"
+            linkUrl="/apps/hm/wiki/${wikiSpaceId}/${pagePath?:''}"/>
+    <moqui.entity.document.DataDocumentLink dataDocumentId="MantleProject" linkSeqId="21" linkSet="hm" label="Project Summary" urlType="screen"
+            linkUrl="/apps/hm/Project/ProjectSummary?workEffortId=${workEffortId}"/>
+    <moqui.entity.document.DataDocumentLink dataDocumentId="MantleTask" linkSeqId="21" linkSet="hm" label="Task Summary" urlType="screen"
+            linkUrl="/apps/hm/Task/TaskSummary?workEffortId=${workEffortId}"/>
+    <moqui.entity.document.DataDocumentLink dataDocumentId="MantleRequest" linkSeqId="21" linkSet="hm" label="Edit Request" urlType="screen"
+            linkUrl="/apps/hm/Request/EditRequest?requestId=${requestId}"/>
+
+    <!-- HiveMind Admin (/hmadmin) DataDocument Links -->
+    <moqui.entity.document.DataDocumentLink dataDocumentId="MantleWikiPage" linkSeqId="25" linkSet="hmadmin" label="Wiki Page" urlType="screen"
+            linkUrl="/apps/hmadmin/Wiki/wiki/${wikiSpaceId}/${pagePath?:''}"/>
+    <moqui.entity.document.DataDocumentLink dataDocumentId="MantleProject" linkSeqId="25" linkSet="hmadmin" label="Edit Project" urlType="screen"
+            linkUrl="/apps/hmadmin/Project/EditProject?rootWorkEffortId=${workEffortId}"/>
+    <moqui.entity.document.DataDocumentLink dataDocumentId="MantleParty" linkSeqId="25" linkSet="hmadmin" label="Edit Party" urlType="screen"
+            linkUrl="/apps/hmadmin/Party/EditParty?partyId=${partyId}"/>
+
+    <!-- TODO: change to notify only, index now done elsewhere; this isn't generally used yet (20170707)
+    <moqui.entity.feed.DataFeed dataFeedId="MantleSearch" dataFeedTypeEnumId="DTFDTP_RT_PUSH"
+            feedName="Mantle General Search" feedReceiveServiceName="HiveMind.SearchServices.indexAndNotify#HiveMindDocuments">
+        <documents dataDocumentId="MantleWikiPage"/>
+        <documents dataDocumentId="MantleProject"/>
+        <documents dataDocumentId="MantleTask"/>
+        <documents dataDocumentId="MantleRequest"/>
+    </moqui.entity.feed.DataFeed>
+    -->
+
+    <!-- EmailTemplates for Feed-driven Update Notifications -->
+    <moqui.basic.email.EmailTemplate emailTemplateId="HM_TASK_UPDATE" description="HiveMind Task Update Notification"
+            emailServerId="SYSTEM" bodyScreenLocation="component://HiveMind/screen/TaskUpdateNotification.xml"
+            webappName="webroot" fromAddress="" ccAddresses="" bccAddresses=""
+            subject="Task Updated: ${document._id} - ${document.name}" sendPartial="Y"/>
+    <moqui.basic.email.EmailTemplate emailTemplateId="HM_WIKI_PAGE_UPDATE" description="HiveMind WikiPage Update Notification"
+            emailServerId="SYSTEM" bodyScreenLocation="component://HiveMind/screen/WikiPageUpdateNotification.xml"
+            webappName="webroot" fromAddress="" ccAddresses="" bccAddresses=""
+            subject="Wiki Page Updated: ${document.wikiSpaceId}/${document.pagePath}" sendPartial="Y"/>
+</entity-facade-xml>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a 
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.1.xsd"
+        default-menu-title="Dashboard" default-menu-index="1" menu-image="glyphicon glyphicon-dashboard" menu-image-type="icon">
+
+    <widgets>
+        <container-row><row-col md="2">
+            <section name="DashboardLeft"><widgets>
+                <dynamic-container id="QuickSearchContainer" transition="QuickSearch"/>
+
+                <container style="text-center">
+                    <container>
+                        <link url="../Project" link-type="anchor">
+                            <image url="/hmstatic/images/project-business120.png" url-type="screen" style="invertible" width="40"/></link>
+                        <link text="Projects" url="../Project" link-type="anchor"/>
+                    </container>
+                    <container>
+                        <link url="../Task" link-type="anchor">
+                            <image url="/hmstatic/images/task-homework.png" url-type="screen" style="invertible" width="40"/></link>
+                        <link text="Tasks" url="../Task" link-type="anchor"/>
+                    </container>
+                    <container>
+                        <link url="../Request" link-type="anchor">
+                            <image url="/hmstatic/images/request-inspiration.png" url-type="screen" style="invertible" width="40"/></link>
+                        <link text="Requests" url="../Request" link-type="anchor"/>
+                    </container>
+
+                    <section name="QuickInfoSection"><actions>
+                        <entity-find-count entity-name="mantle.request.Request" count-field="requestSubmittedCount">
+                            <econdition field-name="statusId" value="ReqSubmitted"/></entity-find-count>
+                        <entity-find-count entity-name="mantle.request.Request" count-field="requestInProgressCount">
+                            <econdition field-name="statusId" operator="in" from="['ReqSubmitted', 'ReqReviewed', 'ReqInProgress']"/></entity-find-count>
+                    </actions><widgets>
+                        <container type="ul" style="list-inline">
+                            <container type="li"><link url="../Request" parameter-map="[statusId:'ReqSubmitted']"
+                                    text="New##Requests" badge="${requestSubmittedCount}" btn-type="default"/></container>
+                            <container type="li"><link url="../Request" parameter-map="[statusId:'ReqSubmitted,ReqReviewed,ReqInProgress', statusId_op:'in']"
+                                    text="Open##Requests" badge="${requestInProgressCount}" btn-type="default"/></container>
+                        </container>
+                    </widgets></section>
+                </container>
+
+                <dynamic-container id="MyWikiSpacesContainer" transition="MyWikiSpaces"/>
+            </widgets></section>
+        </row-col><row-col md="10">
+            <section name="DashboardCenter"><widgets>
+                <dynamic-container id="MyTasksContainer" transition="MyTasks"/>
+                <dynamic-container id="MyRequestsContainer" transition="MyRequests"/>
+            </widgets></section>
+        </row-col></container-row>
+    </widgets>
+</screen>

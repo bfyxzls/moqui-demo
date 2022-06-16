@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This software is in the public domain under CC0 1.0 Universal plus a 
+Grant of Patent License.
+
+To the extent possible under law, the author(s) have dedicated all
+copyright and related and neighboring rights to this software to the
+public domain worldwide. This software is distributed without any
+warranty.
+
+You should have received a copy of the CC0 Public Domain Dedication
+along with this software (see the LICENSE.md file). If not, see
+<http://creativecommons.org/publicdomain/zero/1.0/>.
+-->
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-2.1.xsd"
+        default-menu-include="false" standalone="true">
+
+    <transition name="search"><default-response url="../../Search"/></transition>
+
+    <transition name="getSearchOptions">
+        <actions>
+            <script>queryString = (term.split(' ') as List).collect({ it.matches(/\w*/) ? (it + '*') : it }).join(' ')</script>
+            <service-call name="org.moqui.search.SearchServices.search#DataDocuments" out-map="context"
+                    in-map="[queryString:queryString, indexName:'mantle', documentType:'MantleWikiPage,MantleProject,MantleTask,MantleRequest']"/>
+            <set field="outList" from="[]"/>
+            <iterate list="documentList" entry="document">
+                <entity-find-one entity-name="moqui.entity.document.DataDocument" value-field="dataDocument" cache="true">
+                    <field-map field-name="dataDocumentId" from="document._type"/>
+                </entity-find-one>
+                <if condition="!dataDocument"><log message="DataDocument not found for document:\n${document}"/><continue/></if>
+                <entity-find entity-name="moqui.entity.document.DataDocumentLink" list="ddLinkList" cache="true">
+                    <econdition field-name="dataDocumentId" from="document._type"/>
+                    <econdition field-name="linkSet" value="hm"/>
+                    <econdition field-name="linkCondition" operator="is-null"/>
+                </entity-find>
+                <!-- this is a type=many relationship, but we just want one here: -->
+                <set field="dataDocumentLink" from="ddLinkList ? ddLinkList[0] : null"/>
+                <set field="linkUrl" from="ec.resource.expand(dataDocumentLink?.linkUrl, '', document)"/>
+                <if condition="dataDocumentLink?.urlType == 'transition' || dataDocumentLink?.urlType == 'screen'"><then>
+                    <set field="linkUrlInstance" from="org.moqui.impl.screen.ScreenUrlInfo.getScreenUrlInfo(sri, null, null, linkUrl, 0).getInstance(sri, true)"/>
+                    <set field="urlToOpen" from="linkUrlInstance.pathWithParams"/>
+                </then><else>
+                    <set field="urlToOpen" from="ec.web.getWebappRootUrl(false, null) + ec.resource.expand(dataDocumentLink?.linkUrl, '', document)"/>
+                </else></if>
+                <set field="documentTitle" from="ec.resource.expand(dataDocument.documentTitle, '', document)"/>
+                <script>outList.add([value:document._id, urlToOpen:urlToOpen, label:"${dataDocument.documentName} - ${document._id}: ${documentTitle}".toString()])</script>
+            </iterate>
+            <!-- <log level="warn" message="======= outList: ${outList}"/> -->
+            <script>ec.web.sendJsonResponse(outList)</script>
+        </actions>
+        <default-response type="none"/>
+    </transition>
+
+    <widgets>
+        <container id="dashboard-search-section">
+            <container-box><box-header title="Quick Search"/><box-body>
+                <render-mode><text type="html,vuet"><![CDATA[
+    <input type="text" id="SearchBox" class="form-control typeahead" style="width:100%;">
+    <script>
+        $("#SearchBox").typeahead({ minLength:2, highlight:true, hint:false }, { limit:20, display: function(item) { return item.label; },
+            source: function(query, syncResults, asyncResults) {
+                if (window.qsDelayTimeout) { clearTimeout(window.qsDelayTimeout); }
+                window.qsDelayTimeout = setTimeout(function() { $.ajax({
+                    url: "${sri.screenUrlInstance.url}/getSearchOptions", type: "POST", dataType: "json", data: { term:query, moquiSessionToken:"${ec.web.sessionToken}" },
+                    success: function(data) { asyncResults($.map(data, function(item) { return { label:item.label, value:item.value, urlToOpen:item.urlToOpen } })); }
+                }); }, 300);
+            }
+        });
+        $("#SearchBox").focus();
+    </script>
+                ]]></text></render-mode>
+                <render-mode><text type="html"><![CDATA[
+    <script>$("#SearchBox").bind('typeahead:select', function(event, item) { if (item && item.urlToOpen) { window.open(item.urlToOpen, "_self"); } });</script>
+                ]]></text><text type="vuet"><![CDATA[
+    <m-script>$("#SearchBox").bind('typeahead:select', function(event, item) { if (item && item.urlToOpen) { moqui.webrootVue.setUrl(item.urlToOpen); } });</m-script>
+                ]]></text></render-mode>
+                <container><link url="search" text="Full Search" link-type="anchor"/></container>
+            </box-body></container-box>
+        </container>
+    </widgets>
+</screen>

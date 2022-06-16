@@ -1,0 +1,325 @@
+
+Simple Screens - Reusable Screens, Forms, Reports, Documents, etc
+
+===========================================================================
+Release 2.1.2 - 07 Dec 2019
+===========================================================================
+
+Simple Screens 2.1.2 is a patch level new feature and bug fix release.
+
+The most significant changes in this release are major improvements to bank
+account transaction reconciliation, new forms to create credit memos on the
+Find Invoice screen and from an existing invoice, payment screen changes for
+related refund payments, wiki page delete and copy to different wiki space,
+new Asset Pool screens for inventory reservation earmarking, allow editing
+of invoice adjustment items, transfer shipment To Party and address
+selection, new Asset On Hand Summary and Shipment Package Summary reports.
+
+There are various other minor changes and fixes in this release. For a
+complete list of changes see:
+
+https://github.com/moqui/SimpleScreens/compare/v2.1.1...v2.1.2
+
+
+===========================================================================
+Release 2.1.1 - 23 July 2019
+===========================================================================
+
+Simple Screens 2.1.1 is a patch level new feature and bug fix release.
+
+This release includes various new forms and buttons for different business
+scenarios and significant improvements to the return and shipping screens.
+
+There are only minor changes and fixes in this release. For a complete
+list of changes see:
+
+https://github.com/moqui/SimpleScreens/compare/v2.1.0...v2.1.1
+
+Upgrade Notes
+
+- EditInvoice.xml screen now uses explicit StatusFlow transitions with
+  the 'InvoiceReceivable' and 'InvoicePayable' statusFlowIds; there is new
+  seed data in the AccountingAccountEntities.xml file in mantle-udm for
+  these status flows that needs to be loaded (can be loaded before update)
+
+===========================================================================
+Release 2.1.0 - 29 Nov 2018
+===========================================================================
+
+Simple Screens 2.1.0 is a minor new feature and bug fix release. This
+release is based on Moqui Framework version 2.1.1, mantle-udm 2.1.0, and
+mantle-usl 2.1.0.
+
+This release has many new screens for new functional areas as well as
+cleanups, general improvements, and new functionality on existing screens.
+These changes are based on feedback and requests from production users over
+the last year and now for a wider variety of business scenarios for
+different business models.
+
+There are new screens for Shipping (pick and pack), Production Runs,
+Budgets, Equipment, Product Store and other config, and Requests.
+
+Some basic stats to show growth:
+
+- Screens: 226 (last release 152)
+- Forms: 690 (last release 463)
+
+New Features
+
+- Better user org and active org filtering across various screens and owner
+  org changes for Party, Product, Category, Feature, and Facility
+- Survey screens based on framework DbForm functionality to define and edit
+  ad-hoc forms for various purposes and to view responses
+
+- Find Party has more options and shows matching fields for simple searches
+- On Edit Party forms for viewing and editing contacts and parent accounts
+  for sales accounts, and sales accounts for sales contacts
+- On Edit Party new dialogs for viewing an un-expiring old phone numbers,
+  email addresses, and postal addresses
+- Party Agreement screens (under a tab on the Party screen) with settlement
+  terms and structured records of other terms, content attachments
+- Party Emails tab for emails sent to or received from the Party, only
+  emails sent by system with current functionality
+
+- Major improvements to layout and functionality in GL reports, especially
+  income statement and balance sheet, to be more standard and show more
+  useful information like income and expense percentages
+- Budgets (under Accounting) initial version is GL account based only
+- Edit Invoice screen now displays audit log, system messages, and
+  supports invoice to invoice application
+- Invoice Orders and Shipments tabs to view and manage associations by item
+- Invoice Item Details tab for allocation to Party, Asset, Facility
+- Invoice aging report screens improved to handle invoice to invoice
+  applications, various fixes and cleanups
+- New Invoice Item Summary report
+- New Receivable Invoice Finalized email notification and receivable
+  invoice past due reminder email
+- Edit Payment screen now displays audit log, has form to create refund
+  payment, and supports payment to payment application
+
+- Gateway config screens for Payment and Shipping gateways
+- Product Store config screens including promotion, category, email, party
+- New Product Category Content screens and improved Product Content screens
+- General improvements to Product screens, bulk actions on product Search
+- Equipment related enhancements to Product (equipment model) and
+  Asset (equipment instance) screens for meters, maintenance, registration,
+  and depreciation
+
+- Request screens for customer/store and internal requests, based on
+  Request screens from HiveMind
+- Bulk approve and close orders on Find Order screen along with various new
+  find options and a cleaner default column layout
+- On Order Detail better order part status handling, clearer close order
+  (cancel or complete) options, support promo codes, and more
+- The ElasticSearch based SalesAnalysis.xml screen now has more filtering
+  options, daily interval, moving average display, click for big charts,
+  layout improvements, and more top selling product data
+
+- Shipment Package Tracking screen for use with something like the Shippo
+  integration where we get webhook calls for label status updates to see
+  those that are overdue, etc
+- Many improvements to Shipment Detail screen for incoming and transfer
+  shipments, box weight calc, label handling, relevant dates,
+  unpack/unissue, support cancel in later statuses, local push print
+  through QZ Tray, audit log dialog, and much more
+- Improve Shipment PDFs including separate pack sheet and ship insert
+- Shipping screens for picklists, packing, and pick location moves; with
+  bulk pick list create and other functionality designed for higher volume
+  fulfillment operations
+
+- Dialog for direct receive assets (no Shipment) on Asset Find Summary
+- Improved Asset move forms on existing screens to move by product,
+  location, etc instead of by first selecting Asset and more scanned IDs
+- Asset Container management screens with support for moving container with
+  all assets in it, moving assets between containers, etc
+- Handheld Warehouse (/hhwh) app with selected forms from the Asset and
+  Shipping screens tuned for smaller screen devices with barcode scanner
+- Production Runs (under new Manufacturing section) initial focus on
+  BOM and inventory management, scheduling, and equipment/party assignment
+
+Includes additional icons similar to those in previous versions made by
+SimpleIcon from www.flaticon.com which are licensed CC 3.0 BY:
+http://creativecommons.org/licenses/by/3.0/
+
+
+===========================================================================
+Release 2.0.0 - 22 Oct 2017
+===========================================================================
+
+Simple Screens 2.0.0 is a major new feature and bug fix release. This
+release is based on Moqui Framework version 2.1.0, mantle-udm 2.0.0, and
+mantle-usl 2.0.0.
+
+This release is primarily focused on the procure to pay, order to cash,
+and accounting business processes as used on the POP Commerce ERP/Admin
+application. The POPC ERP app is now an OOTB usable application with
+comprehensive functionality for small and medium sized retailers,
+wholesalers, and distributors of physical goods.
+
+Some basic stats to show just how much new there is:
+
+- Screens: 152 (last release 80)
+- Forms: 463 (last release 223)
+
+There are so many new screens and forms, plus significant enhancements to
+previously existing ones, that it is difficult to list them all. The New
+Features list covers many of the main ones but is far from a complete list
+of everything now in place.
+
+New Features
+
+- Significant cleanups throughout
+- Use new widgets from framework including server-search drop-downs instead
+  of autocomplete in many places, some with default options before input
+- Updates to work with new vuet render mode for more dynamic screens,
+  faster loading, and a better overall user experience
+- Expanded Party screens: Find, Edit (with Roles, Classifications,
+  Identification, Settings, Notes, Email and Phone, Postal Address,
+  Payment Methods, Financial Accounts, and Content), Calendar, Messages,
+  Related parties, and Time Entries
+- New Payment Method screens (Edit, Gateway Responses, Checks, Files,
+  Transactions with reconciliation against Payment records)
+- Improved Customer and Supplier screens with new sections
+- Improved Party, Order, and Payment screens for use with payment gateways
+  like the available Authorize.NET integration
+- Improved Party, Order, and Shipment screens for use with shipping
+  gateways for rate quotes and labels (buy, print, cancel, etc)
+- Improvements for Asset Lots in Asset, Shipment (receive and ship) screens
+- Significant Product Content screen improvements with upload as well as
+  online editing for text content
+- New Request management screens
+- New Wiki Space and Page screens based on old ones from HiveMind
+  - For published content management track version history with compare and
+    selection of version to publish
+- New Return management screens and improvements to Order Detail to show
+  return information and easily create returns or add to existing return
+- Accounting
+  - Accounting Dashboard with organized links/buttons and
+    payable/receivable summary
+  - Reports
+    - Improved Balance Sheet and Income Statement
+    - Account Ledger (entry detail) and Balance History (by period) reports
+    - Asset Receipt, Valuation, and On Hand reports
+    - Invoice Aging Summary, Detail, and Reconciliation reports
+    - Sales Order and Invoice Analysis reports
+  - Improved period close with bulk close (all prev/child) and auto net
+    income (profit/loss) closing transactions
+  - Improved Find Transaction and Find Transaction Entry screens showing
+    summary totals based on columns selected and along with saved finds
+    makes them flexible reporting screens
+  - GL Account tree reference
+- Printed Documents
+  - Invoice PDF improvements for product oriented invoices (previously
+    was only service oriented, now supports both)
+  - Receivable (Customer) Statement PDF
+  - Improved Pack Insert PDF (for outgoing shipment)
+  - New By Package shipment PDF for simpler pick/pack processes
+- Notification Emails: Order Placed, Shipment Shipped, infra for others
+- Online Documentation
+  - Using new framework features
+  - GL Account Class Reference
+  - Invoice and Payment Status References
+  - Order Roles and Parts, Status Reference
+  - Shipment Status Reference
+
+===========================================================================
+Release 1.1.0 - 24 Nov 2016
+===========================================================================
+
+Simple Screens 1.1.0 is a minor new feature and bug fix release. This
+release is based on Moqui Framework version 2.0.0, mantle-udm 1.1.0, and
+mantle-usl 1.1.0.
+
+This release includes various updates for changes in Moqui Framework 2.0.0
+as well as improvements based on new features in XML Screen and XML Form.
+On the technical level there are also data and user scale improvements like
+default parameters for screens that may do finds on large tables.
+
+There are new and improved reusable transitions for parties, assets,
+facilities, products, etc.
+
+The MyAccount app now has a Notifications screen and navbar indicator that
+uses the new Moqui WebSocket notification client along with the
+notification pop ups.
+
+===========================================================================
+Release 1.0.2 - 26 Mar 2016
+===========================================================================
+
+Simple Screens 1.0.2 is a minor new feature and bug fix release.
+
+This release is based on Moqui Framework version 1.6.2, mantle-udm 1.0.1,
+and mantle-usl 1.0.1.
+
+This version only has minor new features like getProductList and
+getTaskList reusable transitions, findEntryUrl in accounting reports, a
+couple fixes and cleanups.
+
+===========================================================================
+Release 1.0.1 - 24 Jan 2016
+===========================================================================
+
+Simple Screens 1.0.1 is a minor new feature and bug fix release.
+
+This release is based on Moqui Framework version 1.6.1, mantle-udm 1.0.0,
+and mantle-usl 1.0.0.
+
+This release has only minor changes from the last, but has updates for the
+new Moqui Framework component management features and use of Bintray
+JCenter for jar files instead of local ones (used in automated tests).
+
+===========================================================================
+Release 1.0.0 - 17 Jan 2016
+===========================================================================
+
+Simple Screens 1.0.0 is the initial release of Simple Screens, a library of
+simple screens and screen components (forms, sections, transitions) to be
+included, extended, or generally reused in applications based on Moqui
+Framework and Mantle Business Artifacts.
+
+This release is based on Moqui Framework version 1.6.0 and Mantle Business
+Artifacts version 1.2.0.
+
+Initial screens include Accounting, Asset, Catalog, Facility, Order, Party,
+and Shipment screens plus templates for various reports and printed
+documents (XSL-FO for PDF rendering).
+
+The My Account app has 15 screens and 34 forms. Aside from My Account,
+SimpleScreens has 64 screens, 187 forms, and 17 templates. SimpleScreens
+has around 15k lines of artifacts in XML, FTL, and Groovy files.
+
+New Features
+
+- Added Accounting screens, originally in HiveMind
+  - Invoice
+  - Payment
+  - Financial Account
+  - GL Account
+  - Transaction
+  - Time Period
+  - Reports
+- Added some User and Vendor screens, originally in HiveMind
+  - Find and Edit User and Vendor
+  - Vendor Internal Org Accounting Setup
+- Added Asset screens, originally in PopCommerce
+- Added Catalog screens, originally in PopCommerce
+  - Product, Category, Feature, and FeatureGroup
+  - Product Search
+- Added Facility screens, originally in PopCommerce
+- Added Order screens, originally in PopCommerce
+- Added Party screens, based on Customer screens in PopCommerce
+- Added Shipment screens, originally in PopCommerce
+- Added MyAccount App, originally in Mantle
+  - Account and Contact Info
+  - Messages
+  - Calendar, Tasks, and Time Entries
+- Added template directory, originally in Mantle
+  - Some common party, accounting, etc forms and transitions
+  - Printed document and report templates
+    - Account: Fin Account Statements, Invoice, Payment Check/Detail
+    - Ledger: Balance Sheet, Cash Flow Statement, Financial Ratios,
+      Income Statement, Retained Earnings Statement
+    - Order: Printed Order
+    - Party: Badge
+    - Shipment: Shipment and Load Pick and Pack, Bill Of Lading
+    - Work: Production Run Pick
